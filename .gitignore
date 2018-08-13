@@ -1,1 +1,6 @@
 manage.py
+app/static/app/bundle.js
+app/static/app/script.js
+node_modules/
+package.json
+package-lock.json

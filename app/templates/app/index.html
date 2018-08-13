@@ -10,7 +10,28 @@
 <body>
     <div class="container">
 
-        <section class="main-button-section">
+        <div class="settings-list">
+            <h1>Parts of speech:</h1>
+
+            <div class="settings-row">
+                <input type="text" class="settings-input">
+                <input type="button" value="save" class="button">
+            </div>
+
+            <div class="settings-row">
+                <input type="text" class="settings-input">
+                <input type="button" value="save" class="button">
+            </div>
+
+            <div class="settings-row">
+                <input type="text" class="settings-input">
+                <input type="button" value="save" class="button">
+            </div>
+             
+            <input type="button" value="Add row" class="button">
+        </div>
+
+        <!-- <section class="main-button-section">
             <input type="button" class="button" value="Add word">
             <input type="button" class="button" value="Game">
             <input type="button" class="button" value="Settings">
@@ -30,8 +51,9 @@
             <div class="main-word">asdfasd</div>
             <div class="main-word">asdfasd</div>
             <div class="main-word">asdfasd</div>
-        </section>
+        </section> -->
+
     </div>
-    <script src="{% static 'app/script.js' %}"></script>
+    <script src="{% static 'app/bundle.js' %}"></script>
 </body>
 </html>
