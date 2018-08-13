@@ -1,3 +1,10 @@
 from django.db import models
 
-# Create your models here.
+class Part(models.Model):
+    value = models.CharField(max_length = 32)
+
+    def get_dict(self):
+        return ({
+            'id': self.id,
+            'value': self.value
+        })

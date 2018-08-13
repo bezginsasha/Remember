@@ -1,0 +1,68 @@
+html, input {
+    font-family: ubuntu;
+}
+
+.container {
+    width: 800px;
+    margin: 20px auto 0px;
+    /* background: rgb(255, 235, 235); */
+}
+
+.button {
+    border: 1px rgb(104, 104, 104) solid;
+    background: white;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 5px;
+}
+
+.button:hover {
+    background: rgb(204, 204, 204);
+}
+
+.button:focus {
+    outline: none;
+}
+
+
+
+.main-button-section {
+    margin-bottom: 15px;
+    float: right;
+}
+
+.main-search {
+    width: 788px;
+    font-size: 22px;
+    border: 1px rgb(104, 104, 104) solid;
+    box-shadow: 0px 1px 10px rgb(165, 165, 165);
+    padding: 5px;
+    margin-bottom: 15px;
+}
+.main-search:hover, .main-search:focus {
+    outline: none;
+    box-shadow: 0px 3px 15px rgb(141, 141, 141);
+}
+
+.main-category {
+    display: inline-block;
+    padding: 5px;
+    font-size: 16px;
+    border: 1px rgb(104, 104, 104) solid;
+    border-radius: 25px;
+    margin-bottom: 15px;
+    cursor: pointer;
+}
+
+.main-word-list {
+    width: 785px;
+    margin: auto;
+}
+
+.main-word {
+    box-shadow: 0px 1px 10px rgb(165, 165, 165);
+    padding: 5px;
+    margin-bottom: 15px;
+    font-size: 18px;
+    cursor: pointer;
+}
