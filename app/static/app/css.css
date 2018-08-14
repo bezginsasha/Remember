@@ -71,11 +71,15 @@ input:focus {
     margin-bottom: 10px;
 }
 
-.settings-input {
+.settings-input, .settings-input-color {
     width: 200px;
     border: none;
     border-bottom: 1px solid;
     font-size: 18px;
     padding: 1px 3px;
     margin-right: 10px;
+}
+
+.settings-input-color {
+    width: 50px;
 }
