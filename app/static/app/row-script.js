@@ -16,14 +16,14 @@ class Request {
         ajax.send();
     }
 
-    getOne(id) {
+    getOne(id, callback) {
         var ajax = new XMLHttpRequest();
         ajax.onreadystatechange = () => {
             if (ajax.readyState == 4){
-                
+                callback(ajax.responseText);
             }
         }
-        ajax.open('GET', '/api/' + this.query + '/', true);
+        ajax.open('GET', '/api/' + this.query + '/' + id, true);
         ajax.send();
     }
 
@@ -32,7 +32,7 @@ class Request {
         ajax.onreadystatechange = () => {
             if (ajax.readyState == 4) {
                 if (callback) {
-                    callback(ajax.responseText);
+                    callback(ajax.responseText);                    
                 }
             }
         }
@@ -41,45 +41,6 @@ class Request {
         ajax.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded')
         ajax.send(body);
     }
-
-    // remove(id) {
-    //     var ajax = new XMLHttpRequest();
-    //     ajax.onreadystatechange = () => {
-    //         if (ajax.readyState == 4){
-    //             console.log(ajax.responseText);
-    //         }
-    //     }
-    //     ajax.open('DELETE', '/api/' + this.query + '/', true);
-    //     ajax.setRequestHeader('X-CSRFToken', this._getCSRF())
-    //     ajax.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded')
-    //     ajax.send('id=' + id);
-    // }
-
-    // create(body) {
-    //     var ajax = new XMLHttpRequest();
-    //     ajax.onreadystatechange = () => {
-    //         if (ajax.readyState == 4){
-    //             console.log(ajax.responseText);
-    //         }
-    //     }
-    //     ajax.open('POST', '/api/' + this.query + '/', true);
-    //     ajax.setRequestHeader('X-CSRFToken', this._getCSRF())
-    //     ajax.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded')
-    //     ajax.send(body);
-    // }
-
-    // update(body) {
-    //     var ajax = new XMLHttpRequest();
-    //     ajax.onreadystatechange = () => {
-    //         if (ajax.readyState == 4){
-    //             console.log(ajax.responseText);
-    //         }
-    //     }
-    //     ajax.open('PUT', '/api/' + this.query + '/', true);
-    //     ajax.setRequestHeader('X-CSRFToken', this._getCSRF())
-    //     ajax.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded')
-    //     ajax.send(body);
-    // }
 
     _getCSRF() {
         var str = document.cookie;
@@ -131,10 +92,26 @@ class SettingsInput extends React.Component {
 class SettingsInputColor extends React.Component {
     constructor(props) {
         super(props);
+        this.handler = this.handler.bind(this);
+    }
+
+    handler(event) {
+        this.props.callback(event.target.value);
     }
 
     render() {
-        return <input type="text" className='settings-input-color' />
+        return (
+            <React.Fragment>
+                <span className="settings-sharp" >#</span>
+                <input
+                    type="text"
+                    className='settings-input-color'
+                    value={this.props.value}
+                    onInput={this.handler}
+                    style={{ background: '#' + this.props.value }}
+                />
+            </React.Fragment>
+        )
     }
 }
 
@@ -204,9 +181,7 @@ class SettingsPartRow extends React.Component {
     }
 
     buttonHandler() {
-        // var request = new Request('parts'),
         var value = this.state.value,
-            // savedValue = this.state.savedValue,
             body = '',
             method = '',
             callback = null;
@@ -253,14 +228,109 @@ class SettingsPartRow extends React.Component {
 class SettingsCategoryRow extends React.Component {
     constructor(props) {
         super(props);
+        this.valueInputHandler = this.valueInputHandler.bind(this);
+        this.colorInputHandler = this.colorInputHandler.bind(this);
+        this.buttonSaveHandler = this.buttonSaveHandler.bind(this);
+        this.state = {
+            value: this.props.category.value,
+            color: this.props.category.color,
+            savedValue: this.props.category.value,
+            savedColor: this.props.category.color,
+            buttonVisibility: 'hidden',
+            selfVisibility: 'block',
+            id: this.props.category.id
+        }
+    }
+
+    valueInputHandler(value) {
+        this.setState({
+            value: value
+        });
+        if ((value == this.state.savedValue) && (this.state.color == this.state.savedColor)) {
+            this.setState({
+                buttonVisibility: 'hidden'
+            })
+        }
+        else {
+            this.setState({
+                buttonVisibility: 'visible'
+            })
+        }
+    }
+
+    colorInputHandler(color) {
+        if (color.length < 7) {
+            this.setState({
+                color: color
+            })
+        }
+        if ((color == this.state.savedColor) && (this.state.value == this.state.savedValue)) {
+            this.setState({
+                buttonVisibility: 'hidden'
+            })
+        }
+        else {
+            this.setState({
+                buttonVisibility: 'visible'
+            })
+        }
+    }
+
+    buttonSaveHandler() {
+        var value = this.state.value,
+            color = this.state.color,
+            body = '',
+            method = '',
+            callback = null;
+
+        // Обновление сохранённых данных
+        this.setState({
+            buttonVisibility: 'hidden',
+            savedValue: value,
+            savedColor: color
+        })
+
+        // Удаление
+        if ((!value) && (!color)) {
+            body = 'id=' + this.state.id;
+            method = 'DELETE';
+            this.setState({
+                selfVisibility: 'none'
+            })
+        }
+
+        // Добавление
+        if (!this.state.id) {
+            var value = encodeURIComponent(this.state.value);
+            var color = encodeURIComponent(this.state.color);
+            body = 'color=' + color + ';value=' + value;
+            method = 'POST';
+            callback = id => {
+                this.setState({
+                    id: id
+                });
+                console.log(id);
+            }
+        }
+
+        // Редактирование
+        if (!body) {
+             var value = encodeURIComponent(this.state.value);
+             var color = encodeURIComponent(this.state.color);
+             var id = this.state.id;
+             body = 'value=' + value + ';color=' + color + ';id=' + id;
+             method = 'PUT';
+        }
+
+        new Request('categories').other(body, method, callback);
     }
 
     render() {
         return (
-            <div className="settings-row">
-                <SettingsInput />
-                <SettingsInputColor />
-                <SettingsButtonSave />
+            <div className="settings-row" style={{display: this.state.selfVisibility}} >
+                <SettingsInput value={this.state.value} callback={this.valueInputHandler} />
+                <SettingsInputColor value={this.state.color} callback={this.colorInputHandler} />
+                <SettingsButtonSave visibility={this.state.buttonVisibility} callback={this.buttonSaveHandler} />
             </div>
         )
     }
@@ -310,22 +380,49 @@ class SettingsPartsList extends React.Component {
 class SettingsCategoryList extends React.Component {
     constructor(props) {
         super(props);
+        this.buttonHandler = this.buttonHandler.bind(this);
+        var callback = categories => this.setState({
+            'categories': categories
+        })
+        this.state = {
+            categories: []
+        }
+        new Request('categories').getAll(callback);
+    }
+
+    buttonHandler() {
+        var categories = this.state.categories;
+        categories.push({
+            id: 0,
+            value: '',
+            color: ''
+        });
+        this.setState({
+            categories: categories
+        })
+    }
+
+    mapCategories(categories) {
+        return categories.map( category => {
+            return <SettingsCategoryRow key={category.id} category={category} />
+        })
     }
 
     render() {
         return (
             <div>
-                <h1>Categories</h1>
-                <p>Hi!</p>                
+                <h1>Categories:</h1>
+                {this.mapCategories(this.state.categories)}
+                <SettingsButtonAdd callback={this.buttonHandler} />
             </div>
         )
     }
 }
 
-ReactDOM.render(
-    <React.Fragment>
-        <SettingsPartsList />
-        <SettingsCategoryList />
-    </React.Fragment>,
-    document.querySelector('.container')
-)
+// ReactDOM.render(
+//     <React.Fragment>
+//         <SettingsPartsList />
+//         <SettingsCategoryList />
+//     </React.Fragment>,
+//     document.querySelector('.container')
+// )

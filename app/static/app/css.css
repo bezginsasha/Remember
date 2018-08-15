@@ -81,5 +81,15 @@ input:focus {
 }
 
 .settings-input-color {
-    width: 50px;
+    width: 55px;
+    font-family: 'ubuntu mono';
+    padding: 2px 0px;
+}
+
+.settings-sharp {
+    cursor: default;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
 }

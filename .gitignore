@@ -4,3 +4,5 @@ app/static/app/script.js
 node_modules/
 package.json
 package-lock.json
+app/migrations/0002_category.py
+app/migrations/__pycache__/0002_category.cpython-35.pyc
