@@ -109,7 +109,7 @@ input:focus {
 
 .new-word-form {
     width: 700px;
-    margin: 30px auto 0px;
+    margin: 30px auto 30px;
     padding: 5px;
     background: white;
 }
@@ -139,6 +139,10 @@ input:focus {
     text-align: right;    
 }
 
+.new-word-button-section * {
+    margin-left: 5px;
+}
+
 
 
 .new-word-select {
@@ -155,8 +159,8 @@ input:focus {
 
 .new-word-select-arrow {
     float: right;
-    font-size: 24px;
-    margin: -6px 0px 0px 0px;
+    font-size: 22px;
+    margin: -4px 0px 0px 0px;
 }
 
 .new-word-options-list {

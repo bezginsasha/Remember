@@ -477,7 +477,6 @@ class MySelect extends React.Component {
             showList: false,
             top: '0px',
             left: '0px',
-            value: ''
         }
     }
 
@@ -504,13 +503,12 @@ class MySelect extends React.Component {
     clickOptionHandler(value) {
         this.setState({
             showList: false,
-            value: value
         });
         this.props.callback(value);
     }
 
     render() {
-        var value = this.state.value ? this.state.value : 'Select item';
+        var value = this.props.value ? this.props.value : 'Select item';
         return (
             <div ref={this.element} className="new-word-select" onClick={this.clickHandler}>
                 <span onClick={this.updateOptionsList}>{value}</span>
@@ -530,9 +528,73 @@ class MySelect extends React.Component {
 
 
 // Здесь компоненты для окна с формой new word
-class NewWordForm extends React.Component {
+class NewWordInput extends React.Component {
     constructor(props) {
         super(props);
+        this.handler = this.handler.bind(this);
+    }
+
+    handler(event) {
+        this.props.callback(event.target.value, this.props.number);
+    }
+
+    render() {
+        return (
+            <div className="new-word-row">
+                <div className="new-word-left-column">
+                    {this.props.label}
+                </div>
+                <div className="new-word-right-column">
+                    <input type="text" className="input" onInput={this.handler} value={this.props.value} />
+                </div>
+            </div>
+        )
+    }
+}
+
+class NewWordSelect extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    render() {
+        return (
+            <div className="new-word-row">
+                <div className="new-word-left-column">
+                    {this.props.label}
+                </div>
+                <div className="new-word-right-column">
+                    <MySelect items={this.props.items} callback={this.props.callback} value={this.props.value} />
+                </div>
+            </div>
+        )
+    }
+}
+
+class NewWordPartRow extends React.Component {
+    constructor(props) {
+        super(props);
+        this.partChange = this.partChange.bind(this);
+        this.valueChange = this.valueChange.bind(this);
+    }
+
+    partChange(value) {
+        var object = this.props.object;
+        object.part = value;
+        this.props.callback(object, this.props.number);
+        this.props.addRow(value, this.props.number);
+    }
+
+    valueChange(value, number) {
+        var object = this.props.object;
+        object.values[number] = value;
+        if (object.values[number + 1] === undefined)
+            object.values.push(null)
+        if (!value)
+            if (!object.values[number + 1])
+                if (object.values.length == number + 2)
+                    object.values.pop();
+        this.props.callback(object, this.props.number);
     }
 
     render() {
@@ -542,11 +604,135 @@ class NewWordForm extends React.Component {
             'adjective',
         ]
         return (
+            <React.Fragment>
+                <hr />
+                <NewWordSelect label="Part of speech:" items={items} value={this.props.object.part} callback={this.partChange} />
+
+                { this.props.object.values.map( (item, index) =>
+                    <NewWordInput
+                        key={index}
+                        value={item}
+                        label={index == 0 ? 'Translated value:' : null}
+                        number={index}
+                        callback={this.valueChange}
+                    />
+                ) }
+
+            </React.Fragment>
+        )
+    }
+}
+
+class NewWordButtonSection extends React.Component {
+    constructor(props) {
+        super(props)
+    }
+
+    render() {
+        var callback = () => alert(123);
+        return (
+            <div className="new-word-button-section">
+                <input type="button" value="Cancel" className="button" />
+                <input type="button" value="Ok" className="button" onClick={callback} />
+            </div>
+        )
+    }
+}
+
+class NewWordForm extends React.Component {
+    constructor(props) {
+        super(props);
+
+        var word = this.props.word;
+        if (!this.props.word) {
+            word = {
+                originalValue: null,
+                category: null,
+                translatedValues: [
+                    {
+                        part: null,
+                        values: [ null ]
+                    },
+                ]
+            }
+        }
+
+        this.originalValueChange = this.originalValueChange.bind(this);
+        this.categoryChange = this.categoryChange.bind(this);
+        this.partRowChange = this.partRowChange.bind(this);
+        this.addRow = this.addRow.bind(this);
+
+        this.state = {
+            word: word
+        }
+    }
+
+    originalValueChange(value) {
+        this.setState( oldState => {
+            var word = oldState.word;
+            word.originalValue = value;
+            return {
+                word: word
+            }
+        });
+    }
+
+    categoryChange(value) {
+        this.setState( oldState => {
+            var word = oldState.word;
+            word.category = value;
+            return {
+                word: word
+            }
+        });
+    }
+
+    partRowChange(object, number) {
+        this.setState( oldState => {
+            var word = oldState.word;
+            word.translatedValues[number] = object;
+            return {
+                word: word
+            }
+        })
+    }
+
+    addRow(value, number) {
+        this.setState( oldState => {
+            var word = oldState.word;
+            if (value != 'none')
+                if (word.translatedValues.length == number + 1)
+                    if (!word.translatedValues[number + 1]) {
+                        word.translatedValues.push({
+                            part: null,
+                            values: [ null ]
+                        });
+                    }
+                    
+            return {
+                word: word
+            }
+        });
+    }
+
+    render() {
+        var items = [
+            'human',
+            'berry',
+            'animal',
+        ];
+        // console.log(this.state.word);
+        return (
             <div className="new-word-form">
                 <h1>New word</h1>
-                <MySelect items={items} callback={ console.log } />
-                <MySelect items={items} callback={ console.log } />
-                <MySelect items={items} callback={ console.log } />
+
+                <NewWordInput label="Original value:" value={this.state.word.originalValue} callback={this.originalValueChange} />
+                <NewWordSelect label="Category:" items={items} value={this.state.word.category} callback={this.categoryChange} />
+
+                { this.state.word.translatedValues.map( (item, index) => 
+                <NewWordPartRow key={index} number={index} object={item} callback={this.partRowChange} addRow={this.addRow} /> ) }
+
+                <NewWordButtonSection />
             </div>
         )
     }

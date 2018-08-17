@@ -20,3 +20,5 @@ class Category(models.Model):
             'value': self.value,
             'color': self.color
         })
+
+# class Word
