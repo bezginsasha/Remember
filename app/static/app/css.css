@@ -8,7 +8,6 @@ input:focus {
 .container {
     width: 800px;
     margin: 20px auto 0px;
-    /* background: rgb(255, 235, 235); */
 }
 
 .button {
@@ -21,6 +20,14 @@ input:focus {
 
 .button:hover {
     background: rgb(204, 204, 204);
+}
+
+.input {
+    border: none;
+    border-bottom: 1px solid;
+    font-size: 18px;
+    padding: 1px 3px;
+    width: 200px;
 }
 
 
@@ -72,11 +79,6 @@ input:focus {
 }
 
 .settings-input, .settings-input-color {
-    width: 200px;
-    border: none;
-    border-bottom: 1px solid;
-    font-size: 18px;
-    padding: 1px 3px;
     margin-right: 10px;
 }
 
@@ -87,6 +89,93 @@ input:focus {
 }
 
 .settings-sharp {
+    cursor: default;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+
+
+
+.foreground {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    min-height: 100%;
+    background: rgba(109, 109, 109, 0.473);
+}
+
+.new-word-form {
+    width: 700px;
+    margin: 30px auto 0px;
+    padding: 5px;
+    background: white;
+}
+
+.new-word-form h1 {
+    text-align: center;
+}
+
+.new-word-form hr {
+    width: 550px;
+}
+
+.new-word-left-column, .new-word-right-column {
+    display: inline-block;
+    width: 335px;
+    margin: 10px 5px;
+    font-size: 18px;
+}
+
+.new-word-left-column {
+    text-align: right;
+}
+
+.new-word-button-section {
+    margin-top: 15px;
+    padding: 5px;    
+    text-align: right;    
+}
+
+
+
+.new-word-select {
+    display: inline-block;
+    width: 200px;
+    padding: 2px 5px;
+    border: 1px rgb(104, 104, 104) solid;
+    font-size: 18px;
+}
+
+.new-word-select:hover {
+    background: rgb(204, 204, 204);
+}
+
+.new-word-select-arrow {
+    float: right;
+    font-size: 24px;
+    margin: -6px 0px 0px 0px;
+}
+
+.new-word-options-list {
+    position: absolute;
+    background: white;
+}
+
+.new-word-option {
+    background: white;
+    border: 1px rgb(104, 104, 104) solid;
+    padding: 2px 5px;
+    width: 200px;
+}
+
+.new-word-option:hover {
+    background: rgb(204, 204, 204);
+}
+
+.new-word-option, .new-word-select {
     cursor: default;
     user-select: none;
     -moz-user-select: none;

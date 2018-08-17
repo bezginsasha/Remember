@@ -59,6 +59,7 @@ class Request {
 
 
 
+// Здесь компоненты для страницы с настройками
 class SettingsInput extends React.Component {
     constructor(props) {
         super(props);
@@ -81,7 +82,7 @@ class SettingsInput extends React.Component {
         return <input
             ref={this.input}
             type="text"
-            className="settings-input"
+            className="input settings-input"
             value={this.props.value}
             onInput={this.handler}
             tabIndex={this.props.id}
@@ -105,7 +106,7 @@ class SettingsInputColor extends React.Component {
                 <span className="settings-sharp" >#</span>
                 <input
                     type="text"
-                    className='settings-input-color'
+                    className='input settings-input-color'
                     value={this.props.value}
                     onInput={this.handler}
                     style={{ background: '#' + this.props.value }}
@@ -177,7 +178,7 @@ class SettingsPartRow extends React.Component {
         this.setState({
             id: id
         })
-        console.log(id);
+        // console.log(id);
     }
 
     buttonHandler() {
@@ -309,7 +310,7 @@ class SettingsCategoryRow extends React.Component {
                 this.setState({
                     id: id
                 });
-                console.log(id);
+                // console.log(id);
             }
         }
 
@@ -419,10 +420,147 @@ class SettingsCategoryList extends React.Component {
     }
 }
 
+
+
+// Здесь селект, который я сам написал)))
+class MyOption extends React.Component {
+    constructor(props) {
+        super(props);
+        this.clickHandler = this.clickHandler.bind(this);
+    }
+
+    clickHandler() {
+        this.props.clickOption(this.props.value);
+    }
+
+    render() {
+        return <div className="new-word-option" onClick={this.clickHandler}>{this.props.value}</div>
+    }
+}
+
+class MyOptionsList extends React.Component {
+    constructor(props) {
+        super(props)
+    }
+
+    mapItems(items) {
+        return items.map( (item, index) => <MyOption key={index} value={item} clickOption={this.props.clickOption} />)
+    }
+
+    render() {
+        var style = {
+            top: this.props.top,
+            left: this.props.left,
+            display: this.props.visibility
+        }
+        if (this.props.visibility) {
+            return (            
+                <div className="new-word-options-list" style={style}>
+                    {this.mapItems(this.props.items)}
+                </div>
+            )
+        }
+        else {
+            return null;
+        }
+    }
+}
+
+class MySelect extends React.Component {
+    constructor(props) {
+        super(props);
+        this.clickHandler = this.clickHandler.bind(this);
+        this.clickOptionHandler = this.clickOptionHandler.bind(this);
+        this.updateOptionsList = this.updateOptionsList.bind(this);
+        this.element = React.createRef();
+        this.state = {
+            showList: false,
+            top: '0px',
+            left: '0px',
+            value: ''
+        }
+    }
+
+    updateOptionsList() {
+        // Вынес в отдульный метод, из-за проверки ниже, чтобы надпись
+        // и стрелка также показывали список при нажатии
+        var coordinates = this.element.current.getBoundingClientRect();
+        this.setState({
+            showList: true,
+            top: coordinates.top + 'px',
+            left: coordinates.left + 'px'
+        })
+    }
+
+    clickHandler(event) {
+        // Проверка если нажали не на сам селект, то ретён
+        if (this.element.current != event.target)
+            return;
+
+        // Если всё ок
+        this.updateOptionsList();
+    }
+
+    clickOptionHandler(value) {
+        this.setState({
+            showList: false,
+            value: value
+        });
+        this.props.callback(value);
+    }
+
+    render() {
+        var value = this.state.value ? this.state.value : 'Select item';
+        return (
+            <div ref={this.element} className="new-word-select" onClick={this.clickHandler}>
+                <span onClick={this.updateOptionsList}>{value}</span>
+                <span onClick={this.updateOptionsList} className="fas fa-sort-down new-word-select-arrow" />
+                <MyOptionsList
+                    top={this.state.top}
+                    left={this.state.left}
+                    items={this.props.items}
+                    clickOption={this.clickOptionHandler}
+                    visibility={this.state.showList}
+                />
+            </div>
+        )
+    }
+}
+
+
+
+// Здесь компоненты для окна с формой new word
+class NewWordForm extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    render() {
+        var items = [
+            'noun',
+            'verb',
+            'adjective',
+        ]
+        return (
+            <div className="new-word-form">
+                <h1>New word</h1>
+                <MySelect items={items} callback={ console.log } />
+                <MySelect items={items} callback={ console.log } />
+                <MySelect items={items} callback={ console.log } />
+            </div>
+        )
+    }
+}
+
+ReactDOM.render(
+    <NewWordForm />,
+    document.querySelector('.foreground')
+)
+
 // ReactDOM.render(
 //     <React.Fragment>
 //         <SettingsPartsList />
-//         <SettingsCategoryList />
+//         <SettingsCategoryList />        
 //     </React.Fragment>,
 //     document.querySelector('.container')
 // )
