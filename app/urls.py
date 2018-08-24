@@ -7,5 +7,7 @@ urlpatterns = [
     path('api/parts/', views.parts, name='parts'),
     path('api/parts/<int:part_id>/', views.parts, name='parts'),
     path('api/categories/', views.categories, name='categories'),
-    path('api/categories/<int:category_id>/', views.categories, name='categories')
+    path('api/categories/<int:category_id>/', views.categories, name='categories'),
+    path('api/words/', views.words, name='words'),
+    path('api/words/<int:category_id>/', views.words_get, name='words_category')
 ]

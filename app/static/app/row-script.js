@@ -626,14 +626,18 @@ class NewWordPartRow extends React.Component {
 class NewWordButtonSection extends React.Component {
     constructor(props) {
         super(props)
+        this.okHandler = this.okHandler.bind(this);
+    }
+
+    okHandler() {
+        this.props.buttonOkCallback();
     }
 
     render() {
-        var callback = () => alert(123);
         return (
             <div className="new-word-button-section">
                 <input type="button" value="Cancel" className="button" />
-                <input type="button" value="Ok" className="button" onClick={callback} />
+                <input type="button" value="Ok" className="button" onClick={this.okHandler} />
             </div>
         )
     }
@@ -661,6 +665,7 @@ class NewWordForm extends React.Component {
         this.categoryChange = this.categoryChange.bind(this);
         this.partRowChange = this.partRowChange.bind(this);
         this.addRow = this.addRow.bind(this);
+        this.buttonOkHandler = this.buttonOkHandler.bind(this);
 
         this.state = {
             word: word
@@ -715,14 +720,19 @@ class NewWordForm extends React.Component {
         });
     }
 
+    buttonOkHandler() {
+        var body = 'data=' + JSON.stringify(this.state.word);
+        new Request('words').other(body, 'POST', console.log)
+    }
+
     render() {
         var items = [
-            'human',
-            'berry',
-            'animal',
+            'qweqwe',
+            'lolkek',
+            'new',
         ];
         // console.log(this.state.word);
-        return (
+        return ReactDOM.createPortal(
             <div className="new-word-form">
                 <h1>New word</h1>
 
@@ -732,16 +742,320 @@ class NewWordForm extends React.Component {
                 { this.state.word.translatedValues.map( (item, index) => 
                 <NewWordPartRow key={index} number={index} object={item} callback={this.partRowChange} addRow={this.addRow} /> ) }
 
-                <NewWordButtonSection />
-            </div>
+                <NewWordButtonSection buttonOkCallback={this.buttonOkHandler} />
+            </div>,
+            document.querySelector('.foreground')
+        )
+    }
+}
+
+
+
+// Здесь главная страничка, то есть со списком всех слов и поиском
+class MainButtonSection extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    showNewWord() {
+        document.querySelector('.foreground').style.display = '';
+        
+    }
+
+    render() {
+        return (
+            <section className="main-button-section">
+                <input type="button" className="button" value="Add word" onClick={this.showNewWord}/>
+                <input type="button" className="button" value="Game" />
+                <input type="button" className="button" value="Settings" />
+            </section>
+        )
+    }
+}
+
+class MainSearch extends React.Component {
+    constructor(props) {
+        super(props);
+        this.handler = this.handler.bind(this);
+    }
+
+    handler(event) {
+        this.props.callback(event.target.value);
+    }
+
+    render() {
+        return <input 
+            type="text"
+            className="main-search"
+            onInput={this.handler}
+            value={this.props.value}
+        />
+    }
+}
+
+class MainCategory extends React.Component {
+    constructor(props) {
+        super(props);
+        this.handler = this.handler.bind(this);
+    }
+
+    handler() {
+        var id = this.props.id || 0;
+        this.props.callback(id);
+    }
+
+    render() {
+        return (
+            <div
+                className="main-category"
+                style={{background: '#' + this.props.color}}
+                children={this.props.value}
+                onClick={this.handler}
+            />
+        )
+    }
+}
+
+class MainCategorySection extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            categories: []
+        }
+        var callback = categories => this.setState({
+            categories: categories
+        })
+        new Request('categories').getAll(callback);
+    }
+
+    render() {
+        return (
+            <section>
+                <MainCategory
+                    value="all"
+                    color="fff"
+                    callback={this.props.callback}
+                />
+                {
+                    this.state.categories.map( category =>
+                        <MainCategory
+                            value={category.value}
+                            color={category.color}
+                            callback={this.props.callback}
+                            id={category.id}
+                            key={category.id}
+                        />
+                    )
+                }
+            </section>
+        )
+    }
+}
+
+class MainWordMenu extends React.Component {
+    constructor(props) {
+        super(props);
+        this.editHandler = this.editHandler.bind(this);
+        this.deleteHandler = this.deleteHandler.bind(this);
+    }
+
+    editHandler() {
+        this.props.closeMenu();
+        console.log(123)
+    }
+
+    deleteHandler() {
+        this.props.closeMenu();
+        new Request('words').other('id=' + 0, 'DELETE', console.log);
+        console.log(1234);
+    }
+
+    render() {
+        var style = {
+            top: this.props.y,
+            left: this.props.x
+        }
+        return (
+            <div
+                className="main-word-menu"
+                style={style}
+                children={
+                    <React.Fragment>
+                        <span onClick={ this.editHandler }>Edit word</span>
+                        <span onClick={ this.deleteHandler }>Delete word</span>
+                        <span>Make hard</span>
+                        <span>Make easy</span>
+                    </React.Fragment>
+                }
+            />
+        )
+    }
+}
+
+class MainWord extends React.Component {
+    constructor(props) {
+        super(props);
+        this.contextMenuHandler = this.contextMenuHandler.bind(this);
+        this.closeMenu = this.closeMenu.bind(this);
+        this.state = {
+            showMenu: false,
+            x: 0,
+            y: 0
+        }
+    }
+
+    contextMenuHandler(event) {
+        event.preventDefault();
+        this.setState({
+            showMenu: true,
+            x: event.pageX,
+            y: event.pageY
+        })
+    }
+
+    closeMenu() {
+        this.setState({
+            showMenu: false,
+        })
+    }
+
+    render() {
+        return (
+            <div
+                className="main-word"
+                onContextMenu={this.contextMenuHandler}
+                children={
+                    <React.Fragment>
+                        <span>{this.props.value}</span>
+                        {this.state.showMenu ?
+                            <MainWordMenu
+                                x={this.state.x}
+                                y={this.state.y}
+                                closeMenu={this.closeMenu}
+                            /> :
+                            null}
+                    </React.Fragment>
+                }
+            />
+        )
+    }
+}
+
+class MainWordSection extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    render() {
+        return (
+            <section className="main-word-list">
+            {
+                this.props.words.map( word =>
+                    <MainWord
+                        key={word.id}
+                        value={word.value}
+                    />
+                )
+            }
+            </section>
+        )
+    }
+}
+
+class MainContainer extends React.Component {
+    constructor(props) {
+        super(props);
+        this.searchHandler = this.searchHandler.bind(this);
+        this.categoryClickHandler = this.categoryClickHandler.bind(this);
+        this.state = {
+            words: [],
+            searchValue: ''
+        };
+        var callback = words => this.setState({
+            words: words
+        });
+        new Request('words/0').getAll(callback);
+    }
+
+    searchHandler(value) {
+        this.setState({
+            searchValue: value
+        })
+    }
+
+    categoryClickHandler(categoryId) {
+        var callback = words => this.setState({
+            words: words
+        });
+        new Request('words/' + categoryId)
+            .getAll(callback);
+    }
+
+    mapWords(word) {
+        // В this лежит параметр, переданный методу map вторым аргументом
+        var searchStr = this,
+            power = 0;
+        // Так просто красивее
+        var id = word.id,
+            word = word.value;
+
+        for (var i = 0; i < word.length; i++) {
+            if (word[i] == searchStr[i])
+                power += 3;
+            if (word[i] == searchStr[i + 1])
+                power++;
+            if (word[i] == searchStr[i - 1])
+                power++;
+        }       
+
+        return {
+            id: id,
+            value: word,
+            power: power
+        }
+    }
+
+    sortWords(w1, w2) {
+        return w2.power - w1.power;
+    }
+
+    render() {
+        var wordList = this.state.words
+            .map(
+                this.mapWords,
+                this.state.searchValue
+            )
+            .sort(this.sortWords)
+            .slice(0, 20);
+
+        return (
+            <React.Fragment>
+                <MainButtonSection />
+                <MainSearch
+                    callback={this.searchHandler}
+                    value={this.state.searchValue}
+                />
+                <MainCategorySection
+                    callback={this.categoryClickHandler}
+                />
+                <MainWordSection
+                    words={wordList}
+                />
+                <NewWordForm />
+            </React.Fragment>
         )
     }
 }
 
 ReactDOM.render(
-    <NewWordForm />,
-    document.querySelector('.foreground')
+    <MainContainer />,
+    document.querySelector('.container')
 )
+
+// ReactDOM.render(
+//     <NewWordForm />,
+//     document.querySelector('.foreground')
+// )
 
 // ReactDOM.render(
 //     <React.Fragment>
