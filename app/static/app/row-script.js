@@ -423,6 +423,8 @@ class SettingsCategoryList extends React.Component {
 
 
 // Здесь селект, который я сам написал)))
+// Чтобы он работал, ему нужно передать массив items, у
+// которого каждый элемент должен иметь свойства id и value
 class MyOption extends React.Component {
     constructor(props) {
         super(props);
@@ -430,21 +432,23 @@ class MyOption extends React.Component {
     }
 
     clickHandler() {
-        this.props.clickOption(this.props.value);
+        this.props.clickOption(this.props.value, this.props.id);
     }
 
     render() {
-        return <div className="new-word-option" onClick={this.clickHandler}>{this.props.value}</div>
+        return(
+            <div
+                className="new-word-option"
+                onClick={this.clickHandler}
+                children={this.props.value}
+            />
+        )
     }
 }
 
 class MyOptionsList extends React.Component {
     constructor(props) {
         super(props)
-    }
-
-    mapItems(items) {
-        return items.map( (item, index) => <MyOption key={index} value={item} clickOption={this.props.clickOption} />)
     }
 
     render() {
@@ -455,8 +459,22 @@ class MyOptionsList extends React.Component {
         }
         if (this.props.visibility) {
             return (            
-                <div className="new-word-options-list" style={style}>
-                    {this.mapItems(this.props.items)}
+                <div className="new-word-option-list list" style={style}>
+                    <MyOption
+                        id={0}
+                        value={'none'}
+                        clickOption={this.props.clickOption}
+                    />
+                    {
+                        this.props.items.map( item => 
+                            <MyOption
+                                key={item.id}
+                                id={item.id}
+                                value={item.value}
+                                clickOption={this.props.clickOption}
+                            />
+                        )
+                    }
                 </div>
             )
         }
@@ -477,6 +495,7 @@ class MySelect extends React.Component {
             showList: false,
             top: '0px',
             left: '0px',
+            selectedOptionValue: 'none'
         }
     }
 
@@ -486,8 +505,8 @@ class MySelect extends React.Component {
         var coordinates = this.element.current.getBoundingClientRect();
         this.setState({
             showList: true,
-            top: coordinates.top + 'px',
-            left: coordinates.left + 'px'
+            top: (coordinates.top + pageYOffset) + 'px',
+            left: (coordinates.left + pageXOffset) + 'px'
         })
     }
 
@@ -500,15 +519,16 @@ class MySelect extends React.Component {
         this.updateOptionsList();
     }
 
-    clickOptionHandler(value) {
+    clickOptionHandler(value, id) {
         this.setState({
             showList: false,
+            selectedOptionValue: value
         });
-        this.props.callback(value);
+        this.props.callback(value, id);
     }
 
     render() {
-        var value = this.props.value ? this.props.value : 'Select item';
+        var value = this.props.value ? this.props.value : this.state.selectedOptionValue;
         return (
             <div ref={this.element} className="new-word-select" onClick={this.clickHandler}>
                 <span onClick={this.updateOptionsList}>{value}</span>
@@ -532,10 +552,16 @@ class NewWordInput extends React.Component {
     constructor(props) {
         super(props);
         this.handler = this.handler.bind(this);
+        this.input = React.createRef();
     }
 
     handler(event) {
         this.props.callback(event.target.value, this.props.number);
+    }
+
+    componentDidMount() {
+        if (this.props.focus)
+            this.input.current.focus()
     }
 
     render() {
@@ -545,7 +571,13 @@ class NewWordInput extends React.Component {
                     {this.props.label}
                 </div>
                 <div className="new-word-right-column">
-                    <input type="text" className="input" onInput={this.handler} value={this.props.value} />
+                    <input
+                        type="text"
+                        className="input"
+                        onInput={this.handler}
+                        value={this.props.value}
+                        ref={this.input}
+                    />
                 </div>
             </div>
         )
@@ -564,7 +596,11 @@ class NewWordSelect extends React.Component {
                     {this.props.label}
                 </div>
                 <div className="new-word-right-column">
-                    <MySelect items={this.props.items} callback={this.props.callback} value={this.props.value} />
+                    <MySelect
+                        items={this.props.items}
+                        callback={this.props.callback}
+                        value={this.props.value}
+                    />
                 </div>
             </div>
         )
@@ -578,7 +614,7 @@ class NewWordPartRow extends React.Component {
         this.valueChange = this.valueChange.bind(this);
     }
 
-    partChange(value) {
+    partChange(value, id) {
         var object = this.props.object;
         object.part = value;
         this.props.callback(object, this.props.number);
@@ -598,15 +634,15 @@ class NewWordPartRow extends React.Component {
     }
 
     render() {
-        var items = [
-            'noun',
-            'verb',
-            'adjective',
-        ]
         return (
             <React.Fragment>
                 <hr />
-                <NewWordSelect label="Part of speech:" items={items} value={this.props.object.part} callback={this.partChange} />
+                <NewWordSelect
+                    label="Part of speech:"
+                    items={this.props.parts}
+                    value={this.props.object.part}
+                    callback={this.partChange}
+                />
 
                 { this.props.object.values.map( (item, index) =>
                     <NewWordInput
@@ -627,16 +663,24 @@ class NewWordButtonSection extends React.Component {
     constructor(props) {
         super(props)
         this.okHandler = this.okHandler.bind(this);
+        this.closeForm = this.closeForm.bind(this);
     }
 
     okHandler() {
         this.props.buttonOkCallback();
+        // this.props.addWord('kek');
+        // this.closeForm();
+    }
+
+    closeForm() {
+        this.props.newWordVisibility(false);
+        document.querySelector('.foreground').style.display = 'none';
     }
 
     render() {
         return (
             <div className="new-word-button-section">
-                <input type="button" value="Cancel" className="button" />
+                <input type="button" value="Cancel" className="button" onClick={this.closeForm} />
                 <input type="button" value="Ok" className="button" onClick={this.okHandler} />
             </div>
         )
@@ -650,6 +694,7 @@ class NewWordForm extends React.Component {
         var word = this.props.word;
         if (!this.props.word) {
             word = {
+                id: 0,
                 originalValue: null,
                 category: null,
                 translatedValues: [
@@ -668,8 +713,19 @@ class NewWordForm extends React.Component {
         this.buttonOkHandler = this.buttonOkHandler.bind(this);
 
         this.state = {
-            word: word
+            word: word,
+            categories: [],
+            parts: []
         }
+
+        var updateCategories = categories => this.setState({
+            categories: categories
+        });
+        var updateParts = parts => this.setState({
+            parts: parts
+        });
+        new Request('categories').getAll(updateCategories);
+        new Request('parts').getAll(updateParts);
     }
 
     originalValueChange(value) {
@@ -705,15 +761,23 @@ class NewWordForm extends React.Component {
     addRow(value, number) {
         this.setState( oldState => {
             var word = oldState.word;
-            if (value != 'none')
-                if (word.translatedValues.length == number + 1)
+            if (value != 'none') {
+                if (word.translatedValues.length == number + 1) {
                     if (!word.translatedValues[number + 1]) {
                         word.translatedValues.push({
                             part: null,
                             values: [ null ]
                         });
                     }
-                    
+                }
+            }
+            else {
+                if (word.translatedValues.length == number + 2) {
+                    if (!word.translatedValues[number + 2]) {
+                        word.translatedValues.pop();
+                    }
+                }
+            }                    
             return {
                 word: word
             }
@@ -721,28 +785,51 @@ class NewWordForm extends React.Component {
     }
 
     buttonOkHandler() {
+        var callback = response => {
+            this.props.newWordVisibility(false);
+            document.querySelector('.foreground').style.display = 'none';
+            this.props.addWord(this.state.word.originalValue, response);
+        }
+
         var body = 'data=' + JSON.stringify(this.state.word);
-        new Request('words').other(body, 'POST', console.log)
+        new Request('words').other(body, 'POST', callback);
     }
 
     render() {
-        var items = [
-            'qweqwe',
-            'lolkek',
-            'new',
-        ];
         // console.log(this.state.word);
         return ReactDOM.createPortal(
             <div className="new-word-form">
                 <h1>New word</h1>
 
-                <NewWordInput label="Original value:" value={this.state.word.originalValue} callback={this.originalValueChange} />
-                <NewWordSelect label="Category:" items={items} value={this.state.word.category} callback={this.categoryChange} />
+                <NewWordInput
+                    label="Original value:"
+                    value={this.state.word.originalValue}
+                    callback={this.originalValueChange}
+                    focus={true}
+                />
+                <NewWordSelect
+                    label="Category:"
+                    items={this.state.categories}
+                    value={this.state.word.category}
+                    callback={this.categoryChange}
+                />
 
                 { this.state.word.translatedValues.map( (item, index) => 
-                <NewWordPartRow key={index} number={index} object={item} callback={this.partRowChange} addRow={this.addRow} /> ) }
+                <NewWordPartRow
+                    key={index}
+                    number={index}
+                    object={item}
+                    callback={this.partRowChange}
+                    addRow={this.addRow}
+                    parts={this.state.parts}
+                    // parts={this.state.parts.map(this.mapClearItems)}
+                /> ) }
 
-                <NewWordButtonSection buttonOkCallback={this.buttonOkHandler} />
+                <NewWordButtonSection
+                    buttonOkCallback={this.buttonOkHandler}
+                    newWordVisibility={this.props.newWordVisibility}
+                    addWord={this.props.addWord}
+                />
             </div>,
             document.querySelector('.foreground')
         )
@@ -755,11 +842,12 @@ class NewWordForm extends React.Component {
 class MainButtonSection extends React.Component {
     constructor(props) {
         super(props);
+        this.showNewWord = this.showNewWord.bind(this);
     }
 
     showNewWord() {
         document.querySelector('.foreground').style.display = '';
-        
+        this.props.newWordVisibility(true);
     }
 
     render() {
@@ -857,17 +945,22 @@ class MainWordMenu extends React.Component {
         super(props);
         this.editHandler = this.editHandler.bind(this);
         this.deleteHandler = this.deleteHandler.bind(this);
+        this.cancelHandler = this.cancelHandler.bind(this);
     }
 
     editHandler() {
         this.props.closeMenu();
-        console.log(123)
+        this.props.showEditWord(this.props.id);
     }
 
     deleteHandler() {
         this.props.closeMenu();
-        new Request('words').other('id=' + 0, 'DELETE', console.log);
-        console.log(1234);
+        this.props.deleteCallback();
+        new Request('words').other('id=' + this.props.id, 'DELETE', console.log);
+    }
+
+    cancelHandler() {
+        this.props.closeMenu();
     }
 
     render() {
@@ -877,7 +970,7 @@ class MainWordMenu extends React.Component {
         }
         return (
             <div
-                className="main-word-menu"
+                className="list"
                 style={style}
                 children={
                     <React.Fragment>
@@ -885,6 +978,7 @@ class MainWordMenu extends React.Component {
                         <span onClick={ this.deleteHandler }>Delete word</span>
                         <span>Make hard</span>
                         <span>Make easy</span>
+                        <span onClick={this.cancelHandler}>Cancel</span>
                     </React.Fragment>
                 }
             />
@@ -897,7 +991,9 @@ class MainWord extends React.Component {
         super(props);
         this.contextMenuHandler = this.contextMenuHandler.bind(this);
         this.closeMenu = this.closeMenu.bind(this);
+        this.deleteSelf = this.deleteSelf.bind(this);
         this.state = {
+            showSelf: true,
             showMenu: false,
             x: 0,
             y: 0
@@ -910,7 +1006,7 @@ class MainWord extends React.Component {
             showMenu: true,
             x: event.pageX,
             y: event.pageY
-        })
+        });
     }
 
     closeMenu() {
@@ -919,25 +1015,37 @@ class MainWord extends React.Component {
         })
     }
 
+    deleteSelf() {
+        this.setState({
+            showSelf: false
+        })
+    }
+
     render() {
-        return (
-            <div
-                className="main-word"
-                onContextMenu={this.contextMenuHandler}
-                children={
-                    <React.Fragment>
-                        <span>{this.props.value}</span>
-                        {this.state.showMenu ?
-                            <MainWordMenu
-                                x={this.state.x}
-                                y={this.state.y}
-                                closeMenu={this.closeMenu}
-                            /> :
-                            null}
-                    </React.Fragment>
-                }
-            />
-        )
+        if (this.state.showSelf)
+            return (
+                <div
+                    className="main-word"
+                    onContextMenu={this.contextMenuHandler}
+                    children={
+                        <React.Fragment>
+                            <span>{this.props.value}</span>
+                            {this.state.showMenu ?
+                                <MainWordMenu
+                                    x={this.state.x}
+                                    y={this.state.y}
+                                    closeMenu={this.closeMenu}
+                                    id={this.props.id}
+                                    deleteCallback={this.deleteSelf}
+                                    showEditWord={this.props.showEditWord}
+                                /> :
+                                null}
+                        </React.Fragment>
+                    }
+                />
+            )
+        else 
+            return null;
     }
 }
 
@@ -953,7 +1061,9 @@ class MainWordSection extends React.Component {
                 this.props.words.map( word =>
                     <MainWord
                         key={word.id}
+                        id={word.id}
                         value={word.value}
+                        showEditWord={this.props.showEditWord}
                     />
                 )
             }
@@ -967,14 +1077,44 @@ class MainContainer extends React.Component {
         super(props);
         this.searchHandler = this.searchHandler.bind(this);
         this.categoryClickHandler = this.categoryClickHandler.bind(this);
+        this.changeNewWordVisibility = this.changeNewWordVisibility.bind(this);
+        this.showEditWord = this.showEditWord.bind(this);
+        this.addWord = this.addWord.bind(this);
         this.state = {
             words: [],
-            searchValue: ''
+            searchValue: '',
+            newWordVisibility: false
         };
         var callback = words => this.setState({
             words: words
         });
         new Request('words/0').getAll(callback);
+    }
+
+    addWord(value, id) {
+        this.setState( oldState => {
+            var words = oldState.words;
+            words.push({
+                value: value,
+                id: id
+            });
+            return {
+                words: words
+            }
+        })
+    }
+
+    changeNewWordVisibility(what) {
+        this.setState({
+            newWordVisibility: what
+        })
+    }
+
+    showEditWord(id) {
+        this.changeNewWordVisibility(true);
+        document.querySelector('.foreground').style.display = '';
+        // alert(id);
+        this.render('kek');
     }
 
     searchHandler(value) {
@@ -1030,7 +1170,9 @@ class MainContainer extends React.Component {
 
         return (
             <React.Fragment>
-                <MainButtonSection />
+                <MainButtonSection
+                    newWordVisibility={this.changeNewWordVisibility}
+                />
                 <MainSearch
                     callback={this.searchHandler}
                     value={this.state.searchValue}
@@ -1040,8 +1182,13 @@ class MainContainer extends React.Component {
                 />
                 <MainWordSection
                     words={wordList}
+                    showEditWord={this.showEditWord}
                 />
-                <NewWordForm />
+                { this.state.newWordVisibility ?
+                    <NewWordForm
+                        newWordVisibility={this.changeNewWordVisibility}
+                        addWord={this.addWord}
+                    /> : null }
             </React.Fragment>
         )
     }

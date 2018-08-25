@@ -30,6 +30,30 @@ input:focus {
     width: 200px;
 }
 
+.list {
+    position: absolute;
+    top: 110px;
+    left: 110px;
+    /* padding: 5px; */
+    background: white;
+    border: 1px rgb(104, 104, 104) solid;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.301);
+
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+
+.list * {
+    display: block;
+    padding: 5px 10px;
+}
+
+.list *:hover {
+    background: rgb(204, 204, 204);
+}
+
 
 
 .main-button-section {
@@ -80,25 +104,6 @@ input:focus {
     margin-bottom: 15px;
     font-size: 18px;
     cursor: pointer;
-}
-
-.main-word-menu {
-    position: absolute;
-    top: 110px;
-    left: 110px;
-    padding: 5px;
-    background: white;
-    border: 1px rgb(104, 104, 104) solid;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.301);
-}
-
-.main-word-menu * {
-    display: block;
-    padding: 2px 4px 2px 5px;
-}
-
-.main-word-menu *:hover {
-    background: rgb(204, 204, 204);
 }
 
 
@@ -192,23 +197,24 @@ input:focus {
     margin: -4px 0px 0px 0px;
 }
 
-.new-word-options-list {
+/* .new-word-options-list {
     position: absolute;
     background: white;
-}
+} */
 
 .new-word-option {
-    background: white;
+    /* background: white;
     border: 1px rgb(104, 104, 104) solid;
-    padding: 2px 5px;
+    padding: 2px 5px; */
     width: 200px;
+    padding: 2px 5px;
 }
 
-.new-word-option:hover {
+/* .new-word-option:hover {
     background: rgb(204, 204, 204);
-}
+} */
 
-.new-word-option, .new-word-select, {
+.new-word-option, .new-word-select {
     cursor: default;
     user-select: none;
     -moz-user-select: none;

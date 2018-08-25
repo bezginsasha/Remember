@@ -84,6 +84,8 @@ def words(request):
     data = QueryDict(request.body)
 
     if request.method == 'DELETE':
+        word = Word.objects.get(pk = data['id'])
+        word.delete()
         return HttpResponse('OK')
 
     if request.method == 'POST':
@@ -115,7 +117,7 @@ def words(request):
                 )
                 value.save()
 
-        return HttpResponse('OK')
+        return HttpResponse(word.id)
 
 
 def get_normal_data(objects):
