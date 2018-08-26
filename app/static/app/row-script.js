@@ -691,9 +691,7 @@ class NewWordForm extends React.Component {
     constructor(props) {
         super(props);
 
-        var word = this.props.word;
-        if (!this.props.word) {
-            word = {
+        var word = {
                 id: 0,
                 originalValue: null,
                 category: null,
@@ -703,8 +701,7 @@ class NewWordForm extends React.Component {
                         values: [ null ]
                     },
                 ]
-            }
-        }
+        }        
 
         this.originalValueChange = this.originalValueChange.bind(this);
         this.categoryChange = this.categoryChange.bind(this);
@@ -726,6 +723,12 @@ class NewWordForm extends React.Component {
         });
         new Request('categories').getAll(updateCategories);
         new Request('parts').getAll(updateParts);
+        if (this.props.id) {
+            var updateWord = word => this.setState({
+                word: word
+            });
+            new Request('words/self/' + this.props.id).getAll(updateWord);
+        }
     }
 
     originalValueChange(value) {
@@ -785,21 +788,34 @@ class NewWordForm extends React.Component {
     }
 
     buttonOkHandler() {
-        var callback = response => {
-            this.props.newWordVisibility(false);
-            document.querySelector('.foreground').style.display = 'none';
-            this.props.addWord(this.state.word.originalValue, response);
-        }
+        if (this.props.id) {
+            var callback = (response) => {
+                this.props.newWordVisibility(false);                
+                document.querySelector('.foreground').style.display = 'none';
+                console.log(response);
+                this.props.updateEditWord(this.props.id, this.state.word.originalValue);
+            };
 
-        var body = 'data=' + JSON.stringify(this.state.word);
-        new Request('words').other(body, 'POST', callback);
+            var body = 'data=' + JSON.stringify(this.state.word);
+            new Request('words').other(body, 'PUT', callback);
+        }
+        else {
+            var callback = response => {
+                this.props.newWordVisibility(false);
+                document.querySelector('.foreground').style.display = 'none';
+                this.props.addWord(this.state.word.originalValue, response);
+            };
+
+            var body = 'data=' + JSON.stringify(this.state.word);
+            new Request('words').other(body, 'POST', callback);
+        }
     }
 
     render() {
         // console.log(this.state.word);
         return ReactDOM.createPortal(
             <div className="new-word-form">
-                <h1>New word</h1>
+                <h1>{this.props.id > 0 ? 'Edit word' : 'New word'}</h1>
 
                 <NewWordInput
                     label="Original value:"
@@ -848,6 +864,7 @@ class MainButtonSection extends React.Component {
     showNewWord() {
         document.querySelector('.foreground').style.display = '';
         this.props.newWordVisibility(true);
+        this.props.resetIdOfEditWord();
     }
 
     render() {
@@ -1080,15 +1097,18 @@ class MainContainer extends React.Component {
         this.changeNewWordVisibility = this.changeNewWordVisibility.bind(this);
         this.showEditWord = this.showEditWord.bind(this);
         this.addWord = this.addWord.bind(this);
+        this.resetIdOfEditWord = this.resetIdOfEditWord.bind(this);
+        this.updateEditWord = this.updateEditWord.bind(this);
         this.state = {
             words: [],
             searchValue: '',
-            newWordVisibility: false
+            newWordVisibility: false,
+            idOfEditWord: 0
         };
         var callback = words => this.setState({
             words: words
         });
-        new Request('words/0').getAll(callback);
+        new Request('words/category/0').getAll(callback);
     }
 
     addWord(value, id) {
@@ -1104,16 +1124,38 @@ class MainContainer extends React.Component {
         })
     }
 
+    updateEditWord(id, value) {
+        this.setState( oldState => {
+            var words = oldState.words;
+            for (var i = 0; i < words.length; i++) {
+                if (words[i].id == id) {
+                    words[i].value = value;
+                    return {
+                        words: words
+                    }
+                }
+            }
+        })
+    }
+
     changeNewWordVisibility(what) {
         this.setState({
             newWordVisibility: what
         })
     }
 
+    resetIdOfEditWord() {
+        this.setState({
+            idOfEditWord: 0
+        });
+    }
+
     showEditWord(id) {
-        this.changeNewWordVisibility(true);
+        this.setState({
+            newWordVisibility: true,
+            idOfEditWord: id,
+        })
         document.querySelector('.foreground').style.display = '';
-        // alert(id);
         this.render('kek');
     }
 
@@ -1127,7 +1169,7 @@ class MainContainer extends React.Component {
         var callback = words => this.setState({
             words: words
         });
-        new Request('words/' + categoryId)
+        new Request('words/category/' + categoryId)
             .getAll(callback);
     }
 
@@ -1172,6 +1214,7 @@ class MainContainer extends React.Component {
             <React.Fragment>
                 <MainButtonSection
                     newWordVisibility={this.changeNewWordVisibility}
+                    resetIdOfEditWord={this.resetIdOfEditWord}
                 />
                 <MainSearch
                     callback={this.searchHandler}
@@ -1188,6 +1231,8 @@ class MainContainer extends React.Component {
                     <NewWordForm
                         newWordVisibility={this.changeNewWordVisibility}
                         addWord={this.addWord}
+                        id={this.state.idOfEditWord}
+                        updateEditWord={this.updateEditWord}
                     /> : null }
             </React.Fragment>
         )

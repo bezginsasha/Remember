@@ -71,13 +71,17 @@ def categories(request, category_id = 0):
         return HttpResponse('OK')
 
 
-def words_get(request, category_id):
-
+def words_get_category(request, category_id):
     if request.method == 'GET':
         words = Word.objects.all()
         if category_id > 0:
             words = words.filter(f_category__id = category_id)
         return JsonResponse(get_normal_data(words), safe = False)
+
+
+def words_get_self(request, word_id):
+    word = Word.objects.get(pk = word_id)
+    return JsonResponse(word.get_dict_full(), safe = False)
 
 
 def words(request):
@@ -86,6 +90,38 @@ def words(request):
     if request.method == 'DELETE':
         word = Word.objects.get(pk = data['id'])
         word.delete()
+        return HttpResponse('OK')
+    
+    if request.method == 'PUT':
+        obj = json.loads(data['data'])
+
+        # Сохранение самого слова
+        word = Word.objects.get(pk = obj['id'])
+        word.f_value = obj['originalValue']        
+        try:
+            category = Category.objects.get(f_value = obj['category'])
+        except Category.DoesNotExist:
+            category = None
+        word.f_category = category
+        word.save()
+
+        values = Value.objects.filter(f_word = word)
+        for value in Value.objects.filter(f_word = word):
+            value.delete()
+
+        for i in obj['translatedValues']:
+            if i['part'] == None:
+                continue
+            for j in i['values']:
+                if j == None:
+                    continue
+                value = Value(
+                    f_word = word,
+                    f_part = Part.objects.get(f_value = i['part']),
+                    f_value = j
+                )
+                value.save()
+
         return HttpResponse('OK')
 
     if request.method == 'POST':
@@ -102,7 +138,7 @@ def words(request):
             f_value = obj['originalValue'],
             f_category = category
         )
-        word.save()        
+        word.save()
 
         for i in obj['translatedValues']:
             if i['part'] == None:

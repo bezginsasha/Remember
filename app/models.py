@@ -50,10 +50,15 @@ class Word(models.Model):
                 obj['values'].append(i.f_value)
         translated_values.append(obj)
 
+        if self.f_category:
+            category = self.f_category.f_value
+        else:
+            category = None
+
         word = {
             'id': self.id,
             'originalValue': self.f_value,
-            'category': self.f_category.f_value,
+            'category': category,
             'translatedValues': translated_values
         }
 
