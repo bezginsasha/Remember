@@ -838,7 +838,6 @@ class NewWordForm extends React.Component {
                     callback={this.partRowChange}
                     addRow={this.addRow}
                     parts={this.state.parts}
-                    // parts={this.state.parts.map(this.mapClearItems)}
                 /> ) }
 
                 <NewWordButtonSection
@@ -1003,18 +1002,100 @@ class MainWordMenu extends React.Component {
     }
 }
 
+class MainWordStand extends React.Component {
+    constructor(props) {
+        super(props)
+        this.closeStand = this.closeStand.bind(this);
+        this.state = {
+            word: null
+        };
+        var callback = word => this.setState({
+            word: word
+        });
+        new Request('words/self/' + this.props.id).getAll(callback);
+    }
+
+    closeStand(event) {
+        this.props.closeStand(event.target);
+    }
+
+    getJSX(trVals) {
+        return (
+            <React.Fragment>
+                {
+                    trVals.map( trVal => 
+                        <React.Fragment>
+                            <p>{trVal.part}</p>
+                            <ul>
+                                {trVal.values.map( value =>
+                                    value ? <li>{value}</li> : null
+                                )}
+                            </ul>
+                        </React.Fragment>
+                    )
+                }
+            </React.Fragment>
+        )
+    }
+
+    render() {
+        var word = this.state.word;
+        console.log(word);
+        return ReactDOM.createPortal(
+            <div className="word-stand">
+                <span
+                    className="fas fa-times close-window-button"
+                    onClick={this.closeStand}
+                />
+                {
+                    word ?
+                    (
+                        <React.Fragment>
+                            <h1>{word.originalValue}</h1>
+                            {this.getJSX(word.translatedValues)}
+                        </React.Fragment>
+                    ) :
+                    null
+                }
+            </div>,
+            document.querySelector('.foreground')
+        )
+    }
+}
+
 class MainWord extends React.Component {
     constructor(props) {
         super(props);
         this.contextMenuHandler = this.contextMenuHandler.bind(this);
         this.closeMenu = this.closeMenu.bind(this);
         this.deleteSelf = this.deleteSelf.bind(this);
+        this.showStand = this.showStand.bind(this);
+        this.closeStand = this.closeStand.bind(this);
         this.state = {
             showSelf: true,
             showMenu: false,
+            showStand: false,
             x: 0,
             y: 0
+        };
+        this.div = React.createRef();
+        this.span = React.createRef();
+    }
+
+    showStand(event) {
+        if ((event.target == this.span.current) || (event.target == this.div.current)) {
+            this.setState({
+                showStand: true
+            });
+            document.querySelector('.foreground').style.display = '';
         }
+    }
+
+    closeStand() {
+        this.setState({
+            showStand: false
+        });
+        document.querySelector('.foreground').style.display = 'none';
     }
 
     contextMenuHandler(event) {
@@ -1044,22 +1125,27 @@ class MainWord extends React.Component {
                 <div
                     className="main-word"
                     onContextMenu={this.contextMenuHandler}
-                    children={
-                        <React.Fragment>
-                            <span>{this.props.value}</span>
-                            {this.state.showMenu ?
-                                <MainWordMenu
-                                    x={this.state.x}
-                                    y={this.state.y}
-                                    closeMenu={this.closeMenu}
-                                    id={this.props.id}
-                                    deleteCallback={this.deleteSelf}
-                                    showEditWord={this.props.showEditWord}
-                                /> :
-                                null}
-                        </React.Fragment>
-                    }
-                />
+                    onClick={this.showStand}
+                    ref={this.div}
+                >
+                    <span ref={this.span}>{this.props.value}</span>
+                    {this.state.showMenu ?
+                        <MainWordMenu
+                            x={this.state.x}
+                            y={this.state.y}
+                            closeMenu={this.closeMenu}
+                            id={this.props.id}
+                            deleteCallback={this.deleteSelf}
+                            showEditWord={this.props.showEditWord}
+                        /> :
+                        null}
+                    {this.state.showStand ?
+                        <MainWordStand
+                            closeStand={this.closeStand}
+                            id={this.props.id}
+                        /> :
+                        null}
+                </div>
             )
         else 
             return null;
@@ -1156,7 +1242,6 @@ class MainContainer extends React.Component {
             idOfEditWord: id,
         })
         document.querySelector('.foreground').style.display = '';
-        this.render('kek');
     }
 
     searchHandler(value) {
@@ -1243,11 +1328,6 @@ ReactDOM.render(
     <MainContainer />,
     document.querySelector('.container')
 )
-
-// ReactDOM.render(
-//     <NewWordForm />,
-//     document.querySelector('.foreground')
-// )
 
 // ReactDOM.render(
 //     <React.Fragment>
