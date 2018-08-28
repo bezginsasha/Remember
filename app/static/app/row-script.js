@@ -3,7 +3,6 @@ var ReactDOM = require('react-dom');
 var Router = require('react-router-dom').BrowserRouter;
 var Route = require('react-router-dom').Route;
 var Link = require('react-router-dom').Link;
-// var BrowserHistory = require('react-router-dom').Router.BrowserHistory;
 
 class Request {
     constructor(query) {
@@ -1217,8 +1216,9 @@ class MainGame extends React.Component {
     }
 
     componentDidUpdate() {
-        if (!this.state.word)
+        if (!this.state.word) {
             this.getWord(this.props.words);
+        }
     }
 
     getRand(words) {
@@ -1234,6 +1234,10 @@ class MainGame extends React.Component {
                 }
             }
 
+            // Очень важный момент))
+            if (!index)
+                index = words.length;
+
             // Если chance, который рандомно равен от 0 до 9, равен нулю,
             // то нужно выбирать из лёгких. А если больше нуля, то из сложных
             var n,
@@ -1245,7 +1249,7 @@ class MainGame extends React.Component {
                 n = Math.floor(Math.random() * (words.length - index)) + index;
             }
             if (oldWord) {
-                if (words[n].value != oldWord.value) {
+                if (words[n].value != oldWord.originalValue) {
                     return words[n];
                 }
             }
@@ -1317,7 +1321,7 @@ class MainGame extends React.Component {
 
                             <input
                                 type="button"
-                                value="show"
+                                value={ this.state.showTranslation ? 'hide' : 'show' }
                                 className="button"
                                 onClick={this.changeAnswerVisibility}
                             />
