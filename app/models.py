@@ -25,11 +25,13 @@ class Category(models.Model):
 class Word(models.Model):
     f_value = models.CharField(max_length = 32)
     f_category = models.ForeignKey(Category, on_delete = models.CASCADE, null = True, default = None, blank = True)
+    f_hard = models.BooleanField(default = False)
 
     def get_dict(self):
         return {
             'id': self.id,
             'value': self.f_value,
+            'hard': self.f_hard
         }
 
     def get_dict_full(self):

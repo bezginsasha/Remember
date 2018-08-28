@@ -74,6 +74,7 @@ def categories(request, category_id = 0):
 def words_get_category(request, category_id):
     if request.method == 'GET':
         words = Word.objects.all()
+        words = words.order_by('-f_hard')
         if category_id > 0:
             words = words.filter(f_category__id = category_id)
         return JsonResponse(get_normal_data(words), safe = False)
@@ -82,6 +83,15 @@ def words_get_category(request, category_id):
 def words_get_self(request, word_id):
     word = Word.objects.get(pk = word_id)
     return JsonResponse(word.get_dict_full(), safe = False)
+
+
+def words_hard(request):
+    id = request.POST['id']
+    hard = request.POST['hard']
+    word = Word.objects.get(pk = id)
+    word.f_hard = bool(int(hard))
+    word.save()
+    return HttpResponse(str(id) + ' ' + hard)
 
 
 def words(request):

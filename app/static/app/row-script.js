@@ -1,5 +1,9 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
+var Router = require('react-router-dom').BrowserRouter;
+var Route = require('react-router-dom').Route;
+var Link = require('react-router-dom').Link;
+// var BrowserHistory = require('react-router-dom').Router.BrowserHistory;
 
 class Request {
     constructor(query) {
@@ -178,7 +182,6 @@ class SettingsPartRow extends React.Component {
         this.setState({
             id: id
         })
-        // console.log(id);
     }
 
     buttonHandler() {
@@ -310,7 +313,6 @@ class SettingsCategoryRow extends React.Component {
                 this.setState({
                     id: id
                 });
-                // console.log(id);
             }
         }
 
@@ -812,7 +814,6 @@ class NewWordForm extends React.Component {
     }
 
     render() {
-        // console.log(this.state.word);
         return ReactDOM.createPortal(
             <div className="new-word-form">
                 <h1>{this.props.id > 0 ? 'Edit word' : 'New word'}</h1>
@@ -869,9 +870,19 @@ class MainButtonSection extends React.Component {
     render() {
         return (
             <section className="main-button-section">
-                <input type="button" className="button" value="Add word" onClick={this.showNewWord}/>
-                <input type="button" className="button" value="Game" />
-                <input type="button" className="button" value="Settings" />
+                <input
+                    type="button"
+                    className="button"
+                    value="Add word"
+                    onClick={this.showNewWord}
+                />
+                <input
+                    type="button"
+                    className="button"
+                    value="Game"
+                    onClick={this.props.showGame}
+                />
+                <Link to="/settings/" children="Settings" className="button" />
             </section>
         )
     }
@@ -962,6 +973,8 @@ class MainWordMenu extends React.Component {
         this.editHandler = this.editHandler.bind(this);
         this.deleteHandler = this.deleteHandler.bind(this);
         this.cancelHandler = this.cancelHandler.bind(this);
+        this.easyHandler = this.easyHandler.bind(this);
+        this.hardHandler = this.hardHandler.bind(this);
     }
 
     editHandler() {
@@ -979,6 +992,18 @@ class MainWordMenu extends React.Component {
         this.props.closeMenu();
     }
 
+    hardHandler() {
+        this.props.closeMenu();
+        console.log('hard');
+        this.props.changeHard(true, this.props.id);
+    }
+
+    easyHandler() {
+        this.props.closeMenu();
+        console.log('easy');
+        this.props.changeHard(false, this.props.id);
+    }
+
     render() {
         var style = {
             top: this.props.y,
@@ -992,8 +1017,8 @@ class MainWordMenu extends React.Component {
                     <React.Fragment>
                         <span onClick={ this.editHandler }>Edit word</span>
                         <span onClick={ this.deleteHandler }>Delete word</span>
-                        <span>Make hard</span>
-                        <span>Make easy</span>
+                        <span onClick={this.hardHandler}>Make hard</span>
+                        <span onClick={this.easyHandler}>Make easy</span>
                         <span onClick={this.cancelHandler}>Cancel</span>
                     </React.Fragment>
                 }
@@ -1025,7 +1050,7 @@ class MainWordStand extends React.Component {
                 {
                     trVals.map( trVal => 
                         <React.Fragment>
-                            <p>{trVal.part}</p>
+                            <p>{trVal.part}:</p>
                             <ul>
                                 {trVal.values.map( value =>
                                     value ? <li>{value}</li> : null
@@ -1040,7 +1065,6 @@ class MainWordStand extends React.Component {
 
     render() {
         var word = this.state.word;
-        console.log(word);
         return ReactDOM.createPortal(
             <div className="word-stand">
                 <span
@@ -1137,6 +1161,7 @@ class MainWord extends React.Component {
                             id={this.props.id}
                             deleteCallback={this.deleteSelf}
                             showEditWord={this.props.showEditWord}
+                            changeHard={this.props.changeHard}
                         /> :
                         null}
                     {this.state.showStand ?
@@ -1167,11 +1192,167 @@ class MainWordSection extends React.Component {
                         id={word.id}
                         value={word.value}
                         showEditWord={this.props.showEditWord}
+                        changeHard={this.props.changeHard}
                     />
                 )
             }
             </section>
         )
+    }
+}
+
+class MainGame extends React.Component {
+    constructor(props) {
+        super(props);
+        this.getRand = this.getRand.bind(this);
+        this.getWord = this.getWord.bind(this);
+            this.hardHandler = this.hardHandler.bind(this);
+            this.easyHandler = this.easyHandler.bind(this);
+            this.changeAnswerVisibility = this.changeAnswerVisibility.bind(this);
+
+        this.state = {
+            word: null,
+            showTranslation: false
+        };
+    }
+
+    componentDidUpdate() {
+        if (!this.state.word)
+            this.getWord(this.props.words);
+    }
+
+    getRand(words) {
+        // Всё делается в бесконечном цикле, выход только если слово новое
+        while (true) {
+            // index это первое слово со сложностью false, то есть лёгкой
+            var index;
+            var oldWord = this.state.word;
+            for (var i = 0; i < words.length; i++) {
+                if (!words[i].hard) {
+                    index = i;
+                    break;
+                }
+            }
+
+            // Если chance, который рандомно равен от 0 до 9, равен нулю,
+            // то нужно выбирать из лёгких. А если больше нуля, то из сложных
+            var n,
+                chance = Math.floor(Math.random() * 10);
+            if (chance) {
+                n = Math.floor(Math.random() * index);
+            }
+            else {
+                n = Math.floor(Math.random() * (words.length - index)) + index;
+            }
+            if (oldWord) {
+                if (words[n].value != oldWord.value) {
+                    return words[n];
+                }
+            }
+            else {
+                return words[n];
+            }
+        }
+    }
+
+    getWord(words) {
+        var id = this.getRand(words).id;
+        var callback = word => this.setState({
+            word: word
+        });
+        new Request('words/self/' + id).getAll(callback);
+    }
+
+    changeAnswerVisibility() {
+        this.setState( oldState => ({
+            showTranslation: !oldState.showTranslation
+        }));
+    }
+
+    hardHandler() {
+        this.getWord(this.props.words);
+        if (this.state.showTranslation) {
+            this.setState({
+                showTranslation: false
+            });
+        }
+        var body = 'id=' + this.state.word.id + ';hard=1';
+        new Request('words/hard').other(body, 'POST', console.log);
+        this.props.changeHardVisibility(true, this.state.word.id);
+    }
+
+    easyHandler() {
+        this.getWord(this.props.words);
+        if (this.state.showTranslation) {
+            this.setState({
+                showTranslation: false
+            });
+        }
+        var body = 'id=' + this.state.word.id + ';hard=0';
+        new Request('words/hard').other(body, 'POST', console.log);
+        this.props.changeHardVisibility(false, this.state.word.id);
+    }
+
+    render() {
+        var word = this.state.word;
+        if (this.props.visibility) {
+            return ReactDOM.createPortal(
+                <div className="word-stand game">
+                    <span
+                        className="fas fa-times close-window-button"
+                        onClick={this.props.closeSelf}
+                        style={{left: '139px'}}
+                    />
+                    {
+                        word ?
+                        <React.Fragment>
+                            <h1>{word.originalValue}</h1>
+
+                            <input
+                                type="button"
+                                value="easy"
+                                className="button"
+                                onClick={this.easyHandler}
+                            />
+
+                            <input
+                                type="button"
+                                value="show"
+                                className="button"
+                                onClick={this.changeAnswerVisibility}
+                            />
+
+                            <input
+                                type="button"
+                                value="hard"
+                                className="button"
+                                onClick={this.hardHandler}
+                            />
+
+                            {
+                                this.state.showTranslation ?
+                                word.translatedValues.map( item => 
+                                    <React.Fragment>
+                                        <h2>{item.part}</h2>
+                                        {
+                                            item.values.map( value => 
+                                                <p>{value}</p>
+                                            )
+                                        }
+                                    </React.Fragment>
+                                ) :
+                                null
+                            }
+                        </React.Fragment> :
+                        null
+                    }
+                </div>,
+                document.querySelector('.foreground')
+            )
+        }
+        else {
+            return null;
+        }
     }
 }
 
@@ -1185,16 +1366,55 @@ class MainContainer extends React.Component {
         this.addWord = this.addWord.bind(this);
         this.resetIdOfEditWord = this.resetIdOfEditWord.bind(this);
         this.updateEditWord = this.updateEditWord.bind(this);
+        this.closeGame = this.closeGame.bind(this);
+        this.showGame = this.showGame.bind(this);
+        this.changeHardVisibility = this.changeHardVisibility.bind(this);
         this.state = {
             words: [],
             searchValue: '',
             newWordVisibility: false,
-            idOfEditWord: 0
+            idOfEditWord: 0,
+            showGame: false
         };
         var callback = words => this.setState({
             words: words
         });
         new Request('words/category/0').getAll(callback);
+    }
+
+    changeHardVisibility(hard, id) {
+        var words = this.state.words;
+        for (var i = 0; i < words.length; i++) {
+            if (words[i].id == id) {
+                var word = words[i];
+                word.hard = hard;
+                words.splice(i, 1);
+                if (hard) {
+                    words.splice(0, 0, word);
+                }
+                else {
+                    words.push(word);
+                }
+                break;
+            }
+        }
+        this.setState({
+            words: words
+        })
+    }
+
+    closeGame() {
+        this.setState({
+            showGame: false
+        });
+        document.querySelector('.foreground').style.display = 'none';
+    }
+
+    showGame() {
+        this.setState({
+            showGame: true
+        });
+        document.querySelector('.foreground').style.display = '';
     }
 
     addWord(value, id) {
@@ -1300,6 +1520,7 @@ class MainContainer extends React.Component {
                 <MainButtonSection
                     newWordVisibility={this.changeNewWordVisibility}
                     resetIdOfEditWord={this.resetIdOfEditWord}
+                    showGame={this.showGame}
                 />
                 <MainSearch
                     callback={this.searchHandler}
@@ -1311,6 +1532,7 @@ class MainContainer extends React.Component {
                 <MainWordSection
                     words={wordList}
                     showEditWord={this.showEditWord}
+                    changeHard={this.changeHardVisibility}
                 />
                 { this.state.newWordVisibility ?
                     <NewWordForm
@@ -1319,20 +1541,34 @@ class MainContainer extends React.Component {
                         id={this.state.idOfEditWord}
                         updateEditWord={this.updateEditWord}
                     /> : null }
+                <MainGame
+                    words={this.state.words}
+                    closeSelf={this.closeGame}
+                    visibility={this.state.showGame}
+                    changeHardVisibility={this.changeHardVisibility}
+                />
+            </React.Fragment>
+        )
+    }
+}
+
+class Settings extends React.Component {
+    render() {
+        return (
+            <React.Fragment>
+                <SettingsPartsList />
+                <SettingsCategoryList />        
             </React.Fragment>
         )
     }
 }
 
 ReactDOM.render(
-    <MainContainer />,
+    <Router>
+        <React.Fragment>
+            <Route path="/main" component={MainContainer} />
+            <Route path="/settings/" component={Settings} />
+        </React.Fragment>
+    </Router>,
     document.querySelector('.container')
 )
-
-// ReactDOM.render(
-//     <React.Fragment>
-//         <SettingsPartsList />
-//         <SettingsCategoryList />        
-//     </React.Fragment>,
-//     document.querySelector('.container')
-// )
