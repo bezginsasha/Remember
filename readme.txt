@@ -1,1 +1,1 @@
-Hi this project for remembering foreign words;
+Hi this project for remembering foreign words.
